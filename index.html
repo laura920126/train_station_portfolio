@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Miami — Laura Acosta</title>
+    <meta
+      name="description"
+      content="Laura Acosta, principal designer and builder. A Miami station of projects."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="view" aria-hidden="true"></canvas>
+    <div id="grain" aria-hidden="true"></div>
+    <div id="vignette" aria-hidden="true"></div>
+
+    <button id="tone" type="button" aria-pressed="false">Tone off</button>
+
+    <p class="hints">
+      <span>Edges open the room</span>
+      <span>Hover a frame</span>
+      <span>Click to enter</span>
+    </p>
+
+    <p id="sentence" aria-live="polite"></p>
+    <div id="cursor" aria-hidden="true"></div>
+
+    <section id="project" aria-labelledby="p-name">
+      <canvas id="field" aria-hidden="true"></canvas>
+      <div class="project-copy">
+        <p class="byline">Laura Acosta · Principal Designer &amp; Builder</p>
+        <p class="eyebrow"><span id="p-index">01</span> / Miami</p>
+        <h1 id="p-name"></h1>
+        <p id="p-sentence"></p>
+        <button id="back" type="button">Back to the platform</button>
+      </div>
+    </section>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

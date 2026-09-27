@@ -5,7 +5,8 @@ import { projects, slidesPassword } from "./projects.js";
 import { createStation } from "./station.js";
 
 const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const coarse = window.matchMedia("(pointer: coarse)").matches;
+const coarse =
+  window.matchMedia("(pointer: coarse)").matches || window.matchMedia("(hover: none)").matches;
 
 const canvas = document.querySelector("#view");
 const sentenceEl = document.querySelector("#sentence");
@@ -27,6 +28,12 @@ const toneBtn = document.querySelector("#tone");
 const copyEl = document.querySelector(".project-copy");
 
 if (!coarse) document.body.classList.add("fine");
+if (coarse) {
+  const labels = ["Drag to look", "Tap a frame", "Tap again to enter"];
+  document.querySelectorAll(".hints span").forEach((span, index) => {
+    span.textContent = labels[index];
+  });
+}
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -62,14 +69,23 @@ let pointerX = window.innerWidth / 2;
 let pointerY = window.innerHeight / 2;
 let touchLock = -1;
 let lastFov = 0;
+const touchLook = { yaw: 0, pitch: 0 };
+let dragLook = coarse;
+let finger = null;
+let pointerDrag = null;
 
 paintGrain();
 resize();
 window.addEventListener("resize", resize);
 
-canvas.addEventListener("pointermove", onPointerMove);
+canvas.addEventListener("pointermove", onPointerMove, { passive: false });
 canvas.addEventListener("pointerdown", onPointerDown);
+canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+canvas.addEventListener("touchmove", onTouchMove, { passive: false });
+canvas.addEventListener("touchend", onTouchEnd);
+canvas.addEventListener("touchcancel", onTouchEnd);
 window.addEventListener("pointerup", onPointerUp);
+window.addEventListener("pointercancel", onPointerUp);
 window.addEventListener("keydown", onKeyDown);
 window.addEventListener("keyup", (event) => held.delete(event.key.toLowerCase()));
 backBtn.addEventListener("click", () => beginExit());
@@ -138,7 +154,8 @@ function frame() {
   update(time);
 
   const desired = desiredLook();
-  const glide = 1 - Math.exp(-4.2 * dt);
+  const dragging = finger || pointerDrag;
+  const glide = 1 - Math.exp((dragging ? -16 : -4.2) * dt);
   look.yaw += (desired.yaw - look.yaw) * glide;
   look.pitch += (desired.pitch - look.pitch) * glide;
   look.fov += (desired.fov - look.fov) * glide;
@@ -202,9 +219,13 @@ function frame() {
   renderer.render(scene, camera);
 }
 
+function preferDrag() {
+  return dragLook || coarse || window.innerWidth <= 1024;
+}
+
 function desiredLook() {
-  const x = coarse ? 0 : edge(pointer.x, 0.58);
-  const y = coarse ? 0 : edge(pointer.y, 0.42);
+  const x = preferDrag() ? 0 : edge(pointer.x, 0.58);
+  const y = preferDrag() ? 0 : edge(pointer.y, 0.42);
   const yawTarget =
     (held.has("a") || held.has("arrowleft") ? -0.55 : 0) +
     (held.has("d") || held.has("arrowright") ? 0.55 : 0);
@@ -215,9 +236,15 @@ function desiredLook() {
   key.yaw += (yawTarget - key.yaw) * follow;
   key.pitch += (pitchTarget - key.pitch) * follow;
 
-  const yaw = clamp(x * 1.02 + key.yaw, -1.12, 1.12);
-  const pitch = clamp(y * 0.5 + key.pitch, -0.34, 0.52);
-  const stretch = Math.min(1, Math.abs(x) * 0.75 + Math.abs(y) * 0.45 + Math.abs(key.yaw) + Math.abs(key.pitch));
+  const yaw = clamp((preferDrag() ? touchLook.yaw : x * 1.02) + key.yaw, -1.12, 1.12);
+  const pitch = clamp((preferDrag() ? touchLook.pitch : y * 0.5) + key.pitch, -0.34, 0.52);
+  const stretch = Math.min(
+    1,
+    (preferDrag() ? Math.abs(touchLook.yaw) / 1.12 : Math.abs(x)) * 0.75 +
+      (preferDrag() ? Math.abs(touchLook.pitch) / 0.52 : Math.abs(y)) * 0.45 +
+      Math.abs(key.yaw) +
+      Math.abs(key.pitch)
+  );
   return { yaw, pitch, fov: 44 + stretch * 6 };
 }
 
@@ -269,15 +296,64 @@ function onPointerMove(event) {
     cursorEl.style.left = `${event.clientX}px`;
     cursorEl.style.top = `${event.clientY}px`;
   }
+  if (!pointerDrag || event.pointerId !== pointerDrag.id || mode !== "platform") return;
+  event.preventDefault();
+  applyDrag(event.clientX, event.clientY, pointerDrag);
 }
 
 let down = null;
 
 function onPointerDown(event) {
   down = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
+  if (mode !== "platform" || finger) return;
+  if (event.pointerType === "mouse" && !preferDrag()) return;
+  pointerDrag = {
+    id: event.pointerId,
+    x: event.clientX,
+    y: event.clientY,
+    yaw: touchLook.yaw,
+    pitch: touchLook.pitch,
+  };
+}
+
+function onTouchStart(event) {
+  if (mode !== "platform" || event.touches.length !== 1) return;
+  event.preventDefault();
+  const point = event.touches[0];
+  dragLook = true;
+  finger = {
+    id: point.identifier,
+    x: point.clientX,
+    y: point.clientY,
+    yaw: touchLook.yaw,
+    pitch: touchLook.pitch,
+  };
+  pointerDrag = null;
+}
+
+function onTouchMove(event) {
+  if (!finger || mode !== "platform") return;
+  const point = [...event.touches].find((item) => item.identifier === finger.id);
+  if (!point) return;
+  event.preventDefault();
+  applyDrag(point.clientX, point.clientY, finger);
+}
+
+function onTouchEnd(event) {
+  if (!finger) return;
+  const ended = [...event.changedTouches].some((item) => item.identifier === finger.id);
+  if (ended) finger = null;
+}
+
+function applyDrag(clientX, clientY, origin) {
+  const dx = clientX - origin.x;
+  const dy = clientY - origin.y;
+  touchLook.yaw = clamp(origin.yaw + (dx / window.innerWidth) * 2.6, -1.12, 1.12);
+  touchLook.pitch = clamp(origin.pitch + (-dy / window.innerHeight) * 1.35, -0.34, 0.52);
 }
 
 function onPointerUp(event) {
+  if (pointerDrag && event.pointerId === pointerDrag.id) pointerDrag = null;
   if (!down || event.pointerId !== down.pointerId) return;
   const moved = Math.hypot(event.clientX - down.x, event.clientY - down.y);
   down = null;

@@ -13,6 +13,8 @@ body {
   height: 100%;
   background: #141615;
   overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
   font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -26,6 +28,7 @@ button {
   width: 100%;
   height: 100%;
   display: block;
+  touch-action: none;
 }
 
 #grain,

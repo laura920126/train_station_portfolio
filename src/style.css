@@ -199,23 +199,193 @@ body.inside {
   font-weight: 400;
 }
 
-#back {
+.project-actions {
   margin-top: 36px;
-  align-self: flex-start;
-  background: transparent;
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+#slides,
+#gate-open,
+#gate-cancel,
+#back {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+#slides,
+#gate-open {
+  background: #fff;
+  color: #141615;
+  border: 0;
   padding: 14px 18px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-size: 12px;
 }
 
-#back:hover,
-#back:focus-visible {
-  background: white;
-  color: #141615;
+#slides:hover,
+#slides:focus-visible,
+#gate-open:hover,
+#gate-open:focus-visible {
+  background: #f3efe6;
   outline: none;
+}
+
+#slides:disabled {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  cursor: default;
+}
+
+#slides:disabled:hover,
+#slides:disabled:focus-visible {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+#back,
+#gate-cancel {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.46);
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+#back:hover,
+#back:focus-visible,
+#gate-cancel:hover,
+#gate-cancel:focus-visible {
+  color: rgba(255, 255, 255, 0.86);
+  outline: none;
+}
+
+#gate {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(7, 8, 8, 0.72);
+}
+
+#gate[hidden] {
+  display: none;
+}
+
+#gate-form {
+  width: min(100%, 420px);
+  padding: 28px 28px 24px;
+  background: #101211;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+#gate-kicker {
+  margin: 0;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+#gate-copy {
+  margin: 12px 0 22px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.gate-label {
+  display: block;
+  margin-bottom: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 11px;
+  opacity: 0.62;
+}
+
+.gate-field {
+  position: relative;
+}
+
+#gate-password {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 44px 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: transparent;
+  color: white;
+  font-family: inherit;
+  font-size: 16px;
+}
+
+#gate-reveal {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+}
+
+#gate-reveal:hover,
+#gate-reveal:focus-visible {
+  color: white;
+  outline: none;
+}
+
+#gate-reveal svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#gate-reveal .eye-shut {
+  display: none;
+}
+
+#gate-reveal[aria-pressed="true"] .eye-open {
+  display: none;
+}
+
+#gate-reveal[aria-pressed="true"] .eye-shut {
+  display: block;
+}
+
+#gate-password:focus-visible {
+  outline: 1px solid white;
+  outline-offset: 2px;
+}
+
+#gate-error {
+  min-height: 1.3em;
+  margin: 10px 0 0;
+  color: #ffb4a8;
+  font-size: 13px;
+}
+
+.gate-actions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-top: 22px;
 }
 
 @media (max-width: 720px) {

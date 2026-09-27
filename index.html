@@ -39,9 +39,40 @@
         <p class="eyebrow"><span id="p-index">01</span> / Miami</p>
         <h1 id="p-name"></h1>
         <p id="p-sentence"></p>
-        <button id="back" type="button">Back to the platform</button>
+        <div class="project-actions">
+          <button id="slides" type="button">See project slides</button>
+          <button id="back" type="button">Back to the station</button>
+        </div>
       </div>
     </section>
+
+    <div id="gate" hidden>
+      <form id="gate-form">
+        <p id="gate-kicker">Slides</p>
+        <p id="gate-copy">Enter the password to open this deck.</p>
+        <label class="gate-label" for="gate-password">Password</label>
+        <div class="gate-field">
+          <input id="gate-password" name="password" type="password" autocomplete="current-password" required />
+          <button id="gate-reveal" type="button" aria-label="Show password" aria-pressed="false">
+            <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7S2 12 2 12z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <svg class="eye-shut" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 3l18 18" />
+              <path d="M10.6 6.2A11 11 0 0 1 12 6c6.2 0 10 6 10 6a18 18 0 0 1-3.2 3.8" />
+              <path d="M6.1 6.8C3.6 8.6 2 12 2 12s3.8 7 10 7c1.5 0 2.9-.4 4.1-1" />
+              <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+            </svg>
+          </button>
+        </div>
+        <p id="gate-error" role="alert"></p>
+        <div class="gate-actions">
+          <button id="gate-open" type="submit">Open slides</button>
+          <button id="gate-cancel" type="button">Cancel</button>
+        </div>
+      </form>
+    </div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

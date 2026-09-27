@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { createAudio } from "./audio.js";
 import { paintField } from "./paint.js";
-import { projects } from "./projects.js";
+import { projects, slidesPassword } from "./projects.js";
 import { createStation } from "./station.js";
 
 const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -16,6 +16,13 @@ const nameEl = document.querySelector("#p-name");
 const sentenceCopyEl = document.querySelector("#p-sentence");
 const indexEl = document.querySelector("#p-index");
 const backBtn = document.querySelector("#back");
+const slidesBtn = document.querySelector("#slides");
+const gateEl = document.querySelector("#gate");
+const gateForm = document.querySelector("#gate-form");
+const gatePassword = document.querySelector("#gate-password");
+const gateReveal = document.querySelector("#gate-reveal");
+const gateError = document.querySelector("#gate-error");
+const gateCancel = document.querySelector("#gate-cancel");
 const toneBtn = document.querySelector("#tone");
 const copyEl = document.querySelector(".project-copy");
 
@@ -66,6 +73,34 @@ window.addEventListener("pointerup", onPointerUp);
 window.addEventListener("keydown", onKeyDown);
 window.addEventListener("keyup", (event) => held.delete(event.key.toLowerCase()));
 backBtn.addEventListener("click", () => beginExit());
+slidesBtn.addEventListener("click", onSlidesClick);
+gateCancel.addEventListener("click", closeGate);
+gateReveal.addEventListener("click", () => {
+  const showing = gatePassword.type === "text";
+  gatePassword.type = showing ? "password" : "text";
+  gateReveal.setAttribute("aria-pressed", showing ? "false" : "true");
+  gateReveal.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+  gatePassword.focus();
+});
+gateEl.addEventListener("click", (event) => {
+  if (event.target === gateEl) closeGate();
+});
+gateForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const entered = gatePassword.value.trim();
+  if (entered !== slidesPassword) {
+    gateError.textContent = "That password doesn't open the slides.";
+    gatePassword.select();
+    return;
+  }
+  const url = activeProject?.project.slides;
+  if (!url) {
+    gateError.textContent = "This deck isn't linked yet.";
+    return;
+  }
+  closeGate();
+  window.open(url, "_blank", "noopener");
+});
 toneBtn.addEventListener("click", async () => {
   const on = await audio.toggle();
   toneBtn.textContent = on ? "Tone on" : "Tone off";
@@ -124,7 +159,8 @@ function frame() {
       if (mode === "enter") {
         mode = "inside";
         document.body.classList.add("inside");
-        backBtn.focus();
+        if (slidesBtn.disabled) backBtn.focus();
+        else slidesBtn.focus();
       } else {
         mode = "platform";
         document.body.classList.remove("inside");
@@ -264,6 +300,10 @@ function onPointerUp(event) {
 }
 
 function onKeyDown(event) {
+  if (event.key === "Escape" && !gateEl.hidden) {
+    closeGate();
+    return;
+  }
   if (event.key === "Escape" && (mode === "inside" || mode === "enter")) {
     beginExit();
     return;
@@ -280,6 +320,7 @@ function beginEnter(poster, fromHistory = false) {
   nameEl.textContent = poster.project.name;
   sentenceCopyEl.textContent = poster.project.description;
   indexEl.textContent = String(poster.index + 1).padStart(2, "0");
+  syncSlidesButton(poster.project);
   paintField(fieldEl, poster.project);
   if (!fromHistory) {
     history.pushState({ id: poster.project.id }, "", `#${poster.project.id}`);
@@ -306,6 +347,7 @@ function openImmediate(poster) {
   nameEl.textContent = poster.project.name;
   sentenceCopyEl.textContent = poster.project.description;
   indexEl.textContent = String(poster.index + 1).padStart(2, "0");
+  syncSlidesButton(poster.project);
   paintField(fieldEl, poster.project);
   const position = poster.group.position;
   writeCam({
@@ -324,8 +366,48 @@ function openImmediate(poster) {
   projectEl.classList.add("open");
 }
 
+function syncSlidesButton(project) {
+  const comingSoon = !project.slides;
+  slidesBtn.textContent = comingSoon ? "Coming soon" : "See project slides";
+  slidesBtn.disabled = comingSoon;
+}
+
+function onSlidesClick() {
+  const project = activeProject?.project;
+  if (!project?.slides) return;
+  if (project.password === false) {
+    window.open(project.slides, "_blank", "noopener");
+    return;
+  }
+  openGate();
+}
+
+function openGate() {
+  if (!activeProject) return;
+  gateError.textContent = "";
+  gatePassword.value = "";
+  hidePassword();
+  gateEl.hidden = false;
+  gatePassword.focus();
+}
+
+function closeGate(restoreFocus = true) {
+  gateEl.hidden = true;
+  gateError.textContent = "";
+  gatePassword.value = "";
+  hidePassword();
+  if (restoreFocus && mode === "inside") slidesBtn.focus();
+}
+
+function hidePassword() {
+  gatePassword.type = "password";
+  gateReveal.setAttribute("aria-pressed", "false");
+  gateReveal.setAttribute("aria-label", "Show password");
+}
+
 function beginExit(fromHistory = false) {
   if (mode === "exit" || mode === "platform") return;
+  closeGate(false);
   if (!fromHistory && location.hash) {
     if (history.state?.id) {
       history.back();
